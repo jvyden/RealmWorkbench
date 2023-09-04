@@ -132,6 +132,7 @@ public class RealmViewerForm : Form
         else if (TypeMatches(type, PropertyType.Bool)) obj = accessor.Get<bool?>(property.Name);
         else if (TypeMatches(type, PropertyType.Date)) obj = accessor.Get<DateTimeOffset?>(property.Name).ToString();
         else if (TypeMatches(type, PropertyType.Int)) obj = accessor.Get<long?>(property.Name);
+        else if (TypeMatches(type, PropertyType.Double)) obj = accessor.Get<double?>(property.Name);
         else obj = $"Unimplemented type '{type}'";
 
         return obj ??= "null";
