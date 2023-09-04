@@ -74,10 +74,35 @@ public class RealmViewerForm : Form
     private void UpdateData()
     {
         SchemaListItem schemaItem = (this._tables.SelectedValue as SchemaListItem)!;
+
+        FillColumns(schemaItem.Schema);
+
+        List<GridItem> items = new();
+        foreach (IRealmObject realmObject in this._realm.DynamicApi.All(schemaItem.Schema.Name))
+        {
+            DynamicObjectApi accessor = realmObject.DynamicApi;
+
+            List<object> values = new();
+            foreach (Property property in schemaItem.Schema)
+            {
+                values.Add(GetPropertyValue(property, accessor));
+            }
+            
+            items.Add(new GridItem
+            {
+                Values = values.ToArray()
+            });
+        }
+
+        this._data.DataStore = items;
+    }
+
+    private void FillColumns(ObjectSchema schema)
+    {
         this._data.Columns.Clear();
 
         int i = 0;
-        foreach (Property property in schemaItem.Schema)
+        foreach (Property property in schema)
         {
             string name = property.Name;
             if ((property.Type & PropertyType.Array) != 0) name += "[]";
@@ -90,42 +115,26 @@ public class RealmViewerForm : Form
 
             i++;
         }
+    }
 
-        List<GridItem> items = new();
-        foreach (IRealmObject realmObject in this._realm.DynamicApi.All(schemaItem.Schema.Name))
-        {
-            DynamicObjectApi accessor = realmObject.DynamicApi;
+    private static object GetPropertyValue(Property property, DynamicObjectApi accessor)
+    {
+        object? obj;
+        PropertyType type = property.Type;
 
-            List<object> values = new();
-            foreach (Property property in schemaItem.Schema)
-            {
-                object? obj = null;
-                PropertyType type = property.Type;
+        // THE TYPEINATOR
+        
+        if (TypeMatches(type, PropertyType.Object))
+            return "";
 
-                if (TypeMatches(type, PropertyType.Object))
-                {
-                    values.Add("");
-                    continue;
-                }
-                
-                if (TypeMatches(type, PropertyType.ObjectId)) obj = accessor.Get<ObjectId?>(property.Name).ToString();
-                else if (TypeMatches(type, PropertyType.String)) obj = accessor.Get<string?>(property.Name);
-                else if (TypeMatches(type, PropertyType.Bool)) obj = accessor.Get<bool?>(property.Name);
-                else if (TypeMatches(type, PropertyType.Date)) obj = accessor.Get<DateTimeOffset?>(property.Name).ToString();
-                else if (TypeMatches(type, PropertyType.Int)) obj = accessor.Get<long?>(property.Name);
-                else obj = $"Unimplemented type '{type}'";
-                    
-                if(obj == null) obj = "null";
-                values.Add(obj);
-            }
-            
-            items.Add(new GridItem
-            {
-                Values = values.ToArray()
-            });
-        }
+        if (TypeMatches(type, PropertyType.ObjectId)) obj = accessor.Get<ObjectId?>(property.Name).ToString();
+        else if (TypeMatches(type, PropertyType.String)) obj = accessor.Get<string?>(property.Name);
+        else if (TypeMatches(type, PropertyType.Bool)) obj = accessor.Get<bool?>(property.Name);
+        else if (TypeMatches(type, PropertyType.Date)) obj = accessor.Get<DateTimeOffset?>(property.Name).ToString();
+        else if (TypeMatches(type, PropertyType.Int)) obj = accessor.Get<long?>(property.Name);
+        else obj = $"Unimplemented type '{type}'";
 
-        this._data.DataStore = items;
+        return obj ??= "null";
     }
 
     private static bool TypeMatches(PropertyType type, PropertyType type2) => (type & type2) == type2;
