@@ -26,6 +26,7 @@ public class RealmViewerForm : Form
         _data = new GridView
         {
             Size = new Size(-1, -1),
+            GridLines = GridLines.Both,
         };
 
         this.Content = new TableLayout
@@ -125,7 +126,7 @@ public class RealmViewerForm : Form
         // THE TYPEINATOR
         
         if (TypeMatches(type, PropertyType.Object))
-            return "";
+            return property.ObjectType ?? "";
 
         if (TypeMatches(type, PropertyType.ObjectId)) obj = accessor.Get<ObjectId?>(property.Name).ToString();
         else if (TypeMatches(type, PropertyType.String)) obj = accessor.Get<string?>(property.Name);
