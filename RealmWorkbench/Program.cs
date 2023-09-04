@@ -1,26 +1,23 @@
-﻿using Realms;
+﻿using Eto.Forms;
+using Realms;
 using Realms.Schema;
+using RealmWorkbench.Forms;
 
-string path = string.Join(' ', args);
-Console.Write("Path: ");
-Console.WriteLine(path);
+namespace RealmWorkbench;
 
-RealmConfiguration configuration = new RealmConfiguration(path)
+public static class Program
 {
-    IsDynamic = true,
-    ShouldDeleteIfMigrationNeeded = false,
-    IsReadOnly = true,
-};
-
-Realm realm = Realm.GetInstance(configuration);
-
-foreach (ObjectSchema schema in realm.Schema)
-{
-    Console.WriteLine($"{schema.Name} ({schema.Count})");
-    foreach (Property property in schema)
+    [STAThread]
+    public static void Main(string[] args)
     {
-        string type = string.IsNullOrEmpty(property.ObjectType) ? property.Type.ToString() : property.ObjectType;
-        if ((property.Type & PropertyType.Array) != 0) type += "[]";
-        Console.WriteLine($"  {property.Name}: {type}");
+        using Application app = new();
+        
+        string path = string.Join(' ', args);
+        if (!string.IsNullOrWhiteSpace(path))
+        {
+            app.Run(new RealmViewerForm(path));
+        }
+        
+        app.Run(new MainForm());
     }
 }
